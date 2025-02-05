@@ -1,43 +1,36 @@
-version: "3.8"
-
 services:
+
+  mariadb:
+    image: bitnami/mariadb:latest
+    env_file:
+      - mariadb.env
+    ports:
+      - 3306:3306
+    #volumes:
+    #  - ./mariadb:/bitnami/mariadb
+
   wordpress:
     image: bitnami/wordpress:latest
     ports:
-      - 80:8080
-      - 443:8443
-    environment:
-      - ALLOW_EMPTY_PASSWORD=no
-      - WORDPRESS_USERNAME=donda
-      - WORDPRESS_PASSWORD=donda
-      - WORDPRESS_EMAIL=grdonda@gmail.com
-      - WORDPRESS_FIRST_NAME=Giovanni
-      - WORDPRESS_LAST_NAME=Donda
-      - WORDPRESS_DATABASE_HOST=mariadb
-      - WORDPRESS_DATABASE_NAME=wordpress
-      - WORDPRESS_DATABASE_USER=bn_wordpress
-      - WORDPRESS_DATABASE_PASSWORD=bitnami
-    volumes:
-      - wordpress_data:/bitnami
+      - 8000:8080
+    env_file:
+      - wp.env
+    #volumes:
+    #  - ./wordpress/data:/bitnami/wordpress
     depends_on:
       - mariadb
 
-  # maria db
-  mariadb:
-    image: bitnami/mariadb:latest
-    environment:
-      - ALLOW_EMPTY_PASSWORD=no
-      - MARIADB_ROOT_PASSWORD=bitnami
-      - MARIADB_USER=bn_wordpress
-      - MARIADB_PASSWORD=bitnami
-      - MARIADB_DATABASE=wordpress
+    #nginx
+  nginx:
+    image: bitnami/nginx:latest
     ports:
-      - 3306:3306
+      - 80:80
+      - 443:443
     volumes:
-      - mariadb_data:/bitnami
-
-volumes:
-  wordpress_data:
-    driver: local
-  mariadb_data:
-    driver: local
+      - ./nginx/app:/app
+      - ./nginx/nginx.conf:/opt/bitnami/nginx/conf/server_blocks/server_block.conf:ro
+      - ./nginx/certs/nginx.crt:/opt/bitnami/nginx/conf/bitnami/certs/nginx.crt
+      - ./nginx/certs/nginx.key:/opt/bitnami/nginx/conf/bitnami/certs/nginx.key
+    depends_on:
+      - wordpress
+      - mariadb
